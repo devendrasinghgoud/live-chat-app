@@ -13,10 +13,10 @@ const MessageSchema = new mongoose.Schema(
       trim: true 
     },
     chatRoom: { 
-      type: String, 
+      type: mongoose.Schema.Types.ObjectId, // Reference to a ChatRoom model
+      ref: "ChatRoom", 
       required: true, 
-      trim: true, 
-      index: true // ✅ Improves query speed
+      index: true // ✅ Improves query performance
     }
   },
   { timestamps: true } // ✅ Auto adds createdAt & updatedAt fields

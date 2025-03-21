@@ -7,6 +7,8 @@ import Chat from "./pages/Chat";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PrivateRoute from "./utils/PrivateRoute";
+import "./App.css";
+
 
 const App = () => {
   return (

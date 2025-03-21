@@ -1,17 +1,29 @@
 const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const authenticateUser = (req, res, next) => {
-    const token = req.header("Authorization");
-    if (!token) {
-        return res.status(401).json({ message: "Access Denied! No Token Provided" });
+    const authHeader = req.header("Authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Access Denied! No valid token provided." });
     }
 
+    const token = authHeader.split(" ")[1]; // Extract token after "Bearer"
+
     try {
-        const verified = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
-        req.user = verified;
+        const verifiedUser = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = verifiedUser; // Attach user data to request
         next();
     } catch (error) {
-        res.status(400).json({ message: "Invalid Token" });
+        console.error("❌ Authentication Error:", error);
+
+        if (error.name === "TokenExpiredError") {
+            return res.status(401).json({ message: "Session expired. Please login again." });
+        } else {
+            return res.status(401).json({ message: "Invalid token. Authentication failed." });
+        }
     }
 };
 

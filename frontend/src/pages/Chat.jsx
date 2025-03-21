@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
-import { jwtDecode } from "jwt-decode"; // Corrected import for jwtDecode
+import { jwtDecode } from "jwt-decode";
 
 const Chat = () => {
   const [message, setMessage] = useState("");
@@ -19,18 +19,16 @@ const Chat = () => {
 
     try {
       const decodedUser = jwtDecode(token);
-      console.log("Decoded User:", decodedUser); // Debugging output
+      console.log("Decoded User:", decodedUser);
 
-      // Check if userId and username are both present in the token
-      if (!decodedUser || !decodedUser.username || !decodedUser.userId) {
-        console.log("Invalid token structure or missing username/userId.");
+      if (!decodedUser?.userId || !decodedUser?.username) {
+        console.error("Invalid token structure or missing userId.");
         navigate("/login");
         return;
       }
 
-      // Ensure the token is not expired
       if (decodedUser.exp * 1000 < Date.now()) {
-        console.log("Token has expired.");
+        console.warn("Token has expired.");
         navigate("/login");
         return;
       }
@@ -43,13 +41,33 @@ const Chat = () => {
   }, [navigate]);
 
   useEffect(() => {
+    socket.on("message", (newMessage) => {
+      console.log("New message received:", newMessage);
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+
+    return () => {
+      socket.off("message");
+    };
+  }, []);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = () => {
     if (message.trim() && user) {
-      const chatMessage = { user: user.username, text: message };
+      const chatRoomId = "65d7f1e99e0a5f2b12345678"; // ✅ Use actual MongoDB chat room ID
+
+      const chatMessage = {
+        sender: user.userId,
+        username: user.username, // ✅ Added username for display
+        content: message,
+        chatRoom: chatRoomId,
+      };
+
       socket.emit("message", chatMessage);
+      setMessages((prev) => [...prev, chatMessage]); // Update UI immediately
       setMessage("");
     }
   };
@@ -69,12 +87,18 @@ const Chat = () => {
           ) : (
             messages.map((msg, index) => (
               <div key={index} className="chat-message">
-                <strong>{msg.user}:</strong> {msg.text}
+                <img
+                  src={msg.profilePicture || "/default-avatar.png"}
+                  alt="Profile"
+                  className="chat-profile-pic"
+                />
+                <strong>{msg.username || "Unknown"}:</strong> {msg.content}
               </div>
             ))
           )}
           <div ref={messagesEndRef} />
         </div>
+
       </div>
       <div className="chat-footer">
         <input
@@ -91,7 +115,11 @@ const Chat = () => {
           disabled={!user}
           className="chat-input"
         />
-        <button onClick={sendMessage} disabled={!message.trim() || !user} className="chat-send">
+        <button
+          onClick={sendMessage}
+          disabled={!message.trim() || !user}
+          className="chat-send"
+        >
           Send
         </button>
         <button onClick={() => navigate("/logout")} className="chat-logout">

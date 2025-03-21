@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navbar, Nav, Button } from "react-bootstrap";
+import { Navbar, Nav, Button, Dropdown } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { getUser } from "../utils/auth";
 
@@ -19,13 +19,28 @@ const NavbarComponent = () => {
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
+    <Navbar bg="dark" variant="dark" expand="lg" fixed="top" className="px-3">
       <Navbar.Brand as={Link} to="/chat">LiveChat</Navbar.Brand>
       <Nav className="ms-auto">
         {user ? (
           <>
-            <Navbar.Text className="me-3">👤 {user.name}</Navbar.Text>
-            <Button variant="outline-light" onClick={handleLogout}>Logout</Button>
+            {/* Profile Dropdown Button */}
+            <Dropdown align="end">
+              <Dropdown.Toggle variant="dark" id="dropdown-profile" className="border-0">
+                <img
+                  src={user.profilePicture || "https://via.placeholder.com/40"}
+                  alt="Profile"
+                  className="rounded-circle"
+                  width="40"
+                  height="40"
+                />
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                <Dropdown.Item as={Link} to="/profile">View Profile</Dropdown.Item>
+                <Dropdown.Divider />
+                <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           </>
         ) : (
           <>
