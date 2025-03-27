@@ -4,6 +4,8 @@ import socket from "../socket";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Tooltip from "react-bootstrap/Tooltip";
 
 const Chat = () => {
   const [message, setMessage] = useState("");
@@ -65,7 +67,6 @@ const Chat = () => {
           { content: message },
           { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
         );
-
         setMessages((prevMessages) =>
           prevMessages.map((msg) =>
             msg._id === editingMessage._id ? { ...msg, content: message } : msg
@@ -83,14 +84,12 @@ const Chat = () => {
         content: message,
         chatRoom: chatRoomId,
       };
-
       socket.emit("message", chatMessage, (serverMessage) => {
         if (serverMessage) {
           setMessages((prev) => [...prev, serverMessage]);
         }
       });
     }
-
     setMessage("");
   };
 
@@ -122,13 +121,18 @@ const Chat = () => {
               messages.map((msg) => (
                 <div key={msg._id} className={`d-flex mb-3 ${msg.sender === user.userId ? "justify-content-end" : ""}`}>
                   <div className="d-flex align-items-center">
-                    <img
-                      src={msg.profilePicture ? `http://localhost:5000${msg.profilePicture}` : `http://localhost:5000/uploads/kakashi.jpg`}
-                      alt="Profile"
-                      className="rounded-circle me-2"
-                      style={{ width: "40px", height: "40px", objectFit: "cover" }}
-                      onError={(e) => (e.target.src = `http://localhost:5000/uploads/kakashi.jpg`)}
-                    />
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>{msg.username || "Unknown User"}</Tooltip>}
+                    >
+                      <img
+                        src={msg.profilePicture ? `http://localhost:5000${msg.profilePicture}` : `http://localhost:5000/uploads/kakashi.jpg`}
+                        alt="Profile"
+                        className="rounded-circle me-2"
+                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                        onError={(e) => (e.target.src = `http://localhost:5000/uploads/kakashi.jpg`)}
+                      />
+                    </OverlayTrigger>
                     <div
                       className={`p-2 rounded ${msg.sender === user.userId ? "bg-primary text-white" : "bg-light text-dark"}`}
                       style={{ maxWidth: "75%" }}
