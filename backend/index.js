@@ -4,13 +4,17 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const multer = require("multer");
+const path = require("path");
+const jwt = require("jsonwebtoken");
 
 // Import Models & Routes
-const User = require("./models/User"); // ✅ Import User model
+const User = require("./models/User");
 const Message = require("./models/Message");
 const authRoutes = require("./routes/auth");
 const protectedRoutes = require("./routes/protected");
 const messageRoutes = require("./routes/messageRoutes");
+const { authMiddleware } = require("./middleware/authMiddleware");
 
 dotenv.config();
 
@@ -23,8 +27,45 @@ const io = new Server(server, {
 // ✅ Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Form data support
+app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads")); // Serve profile pictures
+
+// ✅ Configure Multer Storage
+const storage = multer.diskStorage({
+    destination: "./uploads/",
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+    },
+});
+const upload = multer({ storage });
+
+// ✅ Profile Picture Upload Route (Requires Authentication)
+app.post("/api/upload-profile", authMiddleware, upload.single("profilePicture"), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const userId = req.user.id; // Get user ID from authMiddleware
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const profilePicturePath = `/uploads/${req.file.filename}`;
+
+        // ✅ Update User's Profile Picture
+        const updatedUser = await User.findByIdAndUpdate(userId, { profilePicture: profilePicturePath }, { new: true });
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({ profilePicture: profilePicturePath });
+    } catch (error) {
+        console.error("❌ Error uploading profile picture:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);
@@ -39,10 +80,7 @@ app.get("/", (req, res) => {
 // ✅ MongoDB Connection with Auto-Reconnect
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
         console.log("✅ MongoDB Connected");
 
         mongoose.connection.on("error", (err) => {
@@ -51,12 +89,11 @@ const connectDB = async () => {
 
         mongoose.connection.on("disconnected", () => {
             console.warn("⚠️ MongoDB disconnected! Retrying...");
-            setTimeout(connectDB, 5000); // Retry after 5 seconds
+            setTimeout(connectDB, 5000);
         });
-
     } catch (error) {
         console.error("❌ MongoDB connection failed:", error);
-        setTimeout(connectDB, 5000); // Retry after 5 seconds
+        setTimeout(connectDB, 5000);
     }
 };
 
@@ -64,48 +101,49 @@ const connectDB = async () => {
 io.on("connection", (socket) => {
     console.log(`⚡ New client connected: ${socket.id}`);
 
+    // ✅ Join Chat Room
+    socket.on("joinRoom", ({ chatRoom }) => {
+        socket.join(chatRoom);
+        console.log(`✅ User joined room: ${chatRoom}`);
+    });
+
     // ✅ Handle Incoming Messages
-    socket.on("message", async (msg) => {
+    socket.on("message", async (msg, callback) => {
         try {
-            // Validate required fields
             if (!msg.sender || !msg.content || !msg.chatRoom) {
                 console.error("❌ Missing required fields in message:", msg);
                 return;
             }
 
-            // Fetch sender details (populate username & profile picture)
+            // ✅ Fetch sender details (username + profile picture)
             const sender = await User.findById(msg.sender).select("username profilePicture");
             if (!sender) {
                 console.error("❌ Sender not found:", msg.sender);
                 return;
             }
 
-            // Save message to DB
-            const newMessage = new Message({
-                sender: msg.sender, // Must be a valid ObjectId
-                content: msg.content,
-                chatRoom: msg.chatRoom // Ensure chatRoom ID is provided
-            });
-
-            await newMessage.save();
-
-            // Broadcast saved message with sender details
+            // ✅ Construct the message object with sender details
             const messageWithSender = {
-                _id: newMessage._id,
-                sender: {
-                    _id: sender._id,
-                    username: sender.username,
-                    profilePicture: sender.profilePicture
-                },
-                content: newMessage.content,
-                chatRoom: newMessage.chatRoom,
-                createdAt: newMessage.createdAt
+                sender: sender._id,
+                username: sender.username,
+                profilePicture: sender.profilePicture || "/default-avatar.png",
+                content: msg.content,
+                chatRoom: msg.chatRoom,
+                createdAt: new Date()
             };
 
-            io.emit("message", messageWithSender);
+            // ✅ Store message in MongoDB
+            const savedMessage = new Message(messageWithSender);
+            await savedMessage.save();
+
+            // ✅ Emit the message only to the specific chat room
+            io.to(msg.chatRoom).emit("message", messageWithSender);
+
+            // ✅ Send acknowledgment to the sender
+            callback(messageWithSender);
             console.log("✅ Message sent:", messageWithSender);
         } catch (error) {
-            console.error("❌ Error saving message:", error);
+            console.error("❌ Error sending message:", error);
         }
     });
 

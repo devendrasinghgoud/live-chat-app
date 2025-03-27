@@ -3,28 +3,32 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const authenticateUser = (req, res, next) => {
-    const authHeader = req.header("Authorization");
+const authMiddleware = (req, res, next) => {
+    const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Access Denied! No valid token provided." });
+        console.error("❌ No token provided or incorrect format.");
+        return res.status(401).json({ message: "Access denied. No token provided." });
     }
 
-    const token = authHeader.split(" ")[1]; // Extract token after "Bearer"
+    const token = authHeader.split(" ")[1]; // Extract token
+    console.log("📌 Incoming Token:", token); // 🔍 Debugging
 
     try {
-        const verifiedUser = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = verifiedUser; // Attach user data to request
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("✅ Decoded User:", decoded); // 🔍 Debugging
+        req.user = decoded;
         next();
-    } catch (error) {
-        console.error("❌ Authentication Error:", error);
+    } catch (err) {
+        console.error("❌ Token verification failed:", err.message);
 
-        if (error.name === "TokenExpiredError") {
-            return res.status(401).json({ message: "Session expired. Please login again." });
+        if (err.name === "TokenExpiredError") {
+            return res.status(401).json({ message: "Session expired. Please log in again." });
         } else {
             return res.status(401).json({ message: "Invalid token. Authentication failed." });
         }
     }
 };
 
-module.exports = authenticateUser;
+// ✅ Correctly export the function
+module.exports = { authMiddleware };

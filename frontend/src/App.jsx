@@ -1,14 +1,13 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Container, Row, Col } from "react-bootstrap";
-import "bootstrap/dist/css/bootstrap.min.css";  // ✅ Import Bootstrap
+import "bootstrap/dist/css/bootstrap.min.css"; // ✅ Import Bootstrap
 import NavbarComponent from "./pages/NavbarComponent";
 import Chat from "./pages/Chat";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Profile from "./pages/Profile"; // ✅ Import Profile Page
 import PrivateRoute from "./utils/PrivateRoute";
 import "./App.css";
-
 
 const App = () => {
   return (
@@ -21,18 +20,8 @@ const App = () => {
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
-          <Route
-            path="/chat"
-            element={
-              <Container className="mt-4">
-                <Row className="justify-content-center">
-                  <Col md={8} lg={6}>
-                    <Chat />
-                  </Col>
-                </Row>
-              </Container>
-            }
-          />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/profile" element={<Profile />} /> {/* ✅ Profile Route */}
         </Route>
 
         {/* Redirect unknown routes */}
