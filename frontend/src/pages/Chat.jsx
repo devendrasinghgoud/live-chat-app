@@ -6,6 +6,8 @@ import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
 
 const Chat = () => {
   const [message, setMessage] = useState("");
@@ -13,6 +15,8 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
   const [user, setUser] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,16 +66,8 @@ const Chat = () => {
 
     if (editingMessage) {
       try {
-        await axios.put(
-          `http://localhost:5000/api/messages/${editingMessage._id}`,
-          { content: message },
-          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
-        );
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg._id === editingMessage._id ? { ...msg, content: message } : msg
-          )
-        );
+        await axios.put(`http://localhost:5000/api/messages/${editingMessage._id}`, { content: message }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+        setMessages((prevMessages) => prevMessages.map((msg) => (msg._id === editingMessage._id ? { ...msg, content: message } : msg)));
         setEditingMessage(null);
       } catch (error) {
         console.error("Error editing message:", error);
@@ -93,15 +89,22 @@ const Chat = () => {
     setMessage("");
   };
 
-  const deleteMessage = async (messageId) => {
+  const confirmDeleteMessage = (messageId) => {
+    setMessageToDelete(messageId);
+    setShowModal(true);
+  };
+
+  const deleteMessage = async () => {
+    if (!messageToDelete) return;
     try {
-      await axios.delete(`http://localhost:5000/api/messages/${messageId}`, {
+      await axios.delete(`http://localhost:5000/api/messages/${messageToDelete}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== messageId));
+      setMessages((prevMessages) => prevMessages.filter((msg) => msg._id !== messageToDelete));
     } catch (error) {
       console.error("Error deleting message:", error);
     }
+    setShowModal(false);
   };
 
   return (
@@ -111,85 +114,45 @@ const Chat = () => {
           <h3>Live Chat</h3>
         </div>
         <div className="card-body chat-body">
-          <p className="text-muted text-center">
-            {user ? `Logged in as: ${user.username}` : "Not logged in"}
-          </p>
           <div className="chat-messages overflow-auto p-3" style={{ height: "400px" }}>
-            {messages.length === 0 ? (
-              <p className="text-center text-muted">No messages yet...</p>
-            ) : (
-              messages.map((msg) => (
-                <div key={msg._id} className={`d-flex mb-3 ${msg.sender === user.userId ? "justify-content-end" : ""}`}>
-                  <div className="d-flex align-items-center">
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip>{msg.username || "Unknown User"}</Tooltip>}
-                    >
-                      <img
-                        src={msg.profilePicture ? `http://localhost:5000${msg.profilePicture}` : `http://localhost:5000/uploads/kakashi.jpg`}
-                        alt="Profile"
-                        className="rounded-circle me-2"
-                        style={{ width: "40px", height: "40px", objectFit: "cover" }}
-                        onError={(e) => (e.target.src = `http://localhost:5000/uploads/kakashi.jpg`)}
-                      />
-                    </OverlayTrigger>
-                    <div
-                      className={`p-2 rounded ${msg.sender === user.userId ? "bg-primary text-white" : "bg-light text-dark"}`}
-                      style={{ maxWidth: "75%" }}
-                    >
-                      <strong>{msg.username || "Unknown"}</strong>
-                      <p className="mb-0">{msg.content}</p>
-                      {msg.sender === user.userId && (
-                        <div className="mt-1 d-flex justify-content-end">
-                          <button
-                            className="btn btn-sm btn-warning me-2"
-                            onClick={() => {
-                              setEditingMessage(msg);
-                              setMessage(msg.content);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-sm btn-danger"
-                            onClick={() => deleteMessage(msg._id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
+            {messages.map((msg) => (
+              <div key={msg._id} className={`d-flex mb-3 ${msg.sender === user.userId ? "justify-content-end" : ""}`}>
+                <div className="d-flex align-items-center">
+                  <OverlayTrigger placement="top" overlay={<Tooltip>{msg.username || "Unknown User"}</Tooltip>}>
+                    <img src={msg.profilePicture || "http://localhost:5000/uploads/kakashi.jpg"} alt="Profile" className="rounded-circle me-2" style={{ width: "40px", height: "40px" }} onError={(e) => (e.target.src = "http://localhost:5000/uploads/kakashi.jpg")} />
+                  </OverlayTrigger>
+                  <div className={`p-2 rounded ${msg.sender === user.userId ? "bg-primary text-white" : "bg-light text-dark"}`} style={{ maxWidth: "75%" }}>
+                    <strong>{msg.username || "Unknown"}</strong>
+                    <p className="mb-0">{msg.content}</p>
+                    {msg.sender === user.userId && (
+                      <div className="mt-1 d-flex justify-content-end">
+                        <a href="#" className="text-warning me-2" onClick={(e) => { e.preventDefault(); setEditingMessage(msg); setMessage(msg.content); }}>Edit</a>
+                        <a href="#" className="text-danger" onClick={(e) => { e.preventDefault(); confirmDeleteMessage(msg._id); }}>Delete</a>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
+              </div>
+            ))}
             <div ref={messagesEndRef} />
           </div>
         </div>
         <div className="card-footer d-flex">
-          <input
-            type="text"
-            className="form-control me-2"
-            placeholder="Type a message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            disabled={!user}
-          />
-          <button
-            className={`btn ${editingMessage ? "btn-success" : "btn-primary"} me-2`}
-            onClick={sendMessage}
-            disabled={!message.trim() || !user}
-          >
-            {editingMessage ? "Update" : "Send"}
-          </button>
+          <input type="text" className="form-control me-2" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }} disabled={!user} />
+          <button className={`btn ${editingMessage ? "btn-success" : "btn-primary"} me-2`} onClick={sendMessage} disabled={!message.trim() || !user}>{editingMessage ? "Update" : "Send"}</button>
         </div>
       </div>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Deletion</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Are you sure you want to delete this message?</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancel</Button>
+          <Button variant="danger" onClick={deleteMessage}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
