@@ -79,6 +79,7 @@ const Chat = () => {
         username: user.username,
         content: message,
         chatRoom: chatRoomId,
+        createdAt: new Date().toISOString(), // Adding timestamp
       };
       socket.emit("message", chatMessage, (serverMessage) => {
         if (serverMessage) {
@@ -124,6 +125,9 @@ const Chat = () => {
                   <div className={`p-2 rounded ${msg.sender === user.userId ? "bg-primary text-white" : "bg-light text-dark"}`} style={{ maxWidth: "75%" }}>
                     <strong>{msg.username || "Unknown"}</strong>
                     <p className="mb-0">{msg.content}</p>
+                    <span className="badge bg-secondary mt-1">
+                      {new Date(msg.createdAt).toLocaleString()} {/* Display formatted timestamp */}
+                    </span>
                     {msg.sender === user.userId && (
                       <div className="mt-1 d-flex justify-content-end">
                         <a href="#" className="text-warning me-2" onClick={(e) => { e.preventDefault(); setEditingMessage(msg); setMessage(msg.content); }}>Edit</a>

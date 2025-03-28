@@ -19,10 +19,10 @@ const NavbarComponent = () => {
   };
 
   return (
-    <Navbar bg="dark" variant="dark" expand="lg" fixed="top" className="shadow-sm py-3">
+    <Navbar bg="transparent" expand="lg" fixed="top" className="shadow-sm py-3">
       <Container>
         {/* Brand */}
-        <Navbar.Brand as={Link} to="/chat" className="fw-bold fs-3 text-light">
+        <Navbar.Brand as={Link} to="/chat" className="fw-bold fs-3 text-dark">
           LiveChat <span className="text-primary">⚡</span>
         </Navbar.Brand>
 
@@ -33,9 +33,9 @@ const NavbarComponent = () => {
             {user ? (
               <Dropdown align="end">
                 <Dropdown.Toggle
-                  variant="dark"
+                  variant="light"
                   id="dropdown-profile"
-                  className="border-0 d-flex align-items-center gap-2 text-light shadow-none"
+                  className="border-0 d-flex align-items-center gap-2 text-dark shadow-none"
                 >
                   {/* User Profile Picture */}
                   <img
@@ -45,7 +45,7 @@ const NavbarComponent = () => {
                         : "http://localhost:5000/uploads/kakashi.jpg"
                     }
                     alt="Profile"
-                    className="rounded-circle border border-light"
+                    className="rounded-circle border border-dark"
                     width="40"
                     height="40"
                     onError={(e) => (e.target.src = "http://localhost:5000/uploads/kakashi.jpg")}
@@ -64,7 +64,7 @@ const NavbarComponent = () => {
               </Dropdown>
             ) : (
               <div className="d-flex gap-2">
-                <Link to="/login" className="btn btn-outline-light px-4">Login</Link>
+                <Link to="/login" className="btn btn-outline-dark px-4">Login</Link>
                 <Link to="/signup" className="btn btn-primary px-4">Signup</Link>
               </div>
             )}
