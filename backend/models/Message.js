@@ -13,13 +13,32 @@ const MessageSchema = new mongoose.Schema(
       trim: true 
     },
     chatRoom: { 
-      type: mongoose.Schema.Types.ObjectId, // Reference to a ChatRoom model
+      type: mongoose.Schema.Types.ObjectId, 
       ref: "ChatRoom", 
       required: true, 
-      index: true // ✅ Improves query performance
+      index: true  // ✅ Optimized query performance
+    },
+    isDeleted: { 
+      type: Boolean, 
+      default: false  // ✅ Supports soft delete
     }
   },
-  { timestamps: true } // ✅ Auto adds createdAt & updatedAt fields
+  { timestamps: true }
 );
+
+// ✅ Auto-populate sender's username to avoid `populate()` in every query
+MessageSchema.pre(/^find/, function (next) {
+  this.populate("sender", "username");
+  next();
+});
+
+// ✅ Converts Mongoose objects to JSON-friendly format
+MessageSchema.set("toJSON", {
+  virtuals: true, 
+  transform: (_, obj) => {
+    delete obj.__v; 
+    return obj;
+  }
+});
 
 module.exports = mongoose.model("Message", MessageSchema);

@@ -1,22 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { Container, Card, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { FiArrowLeft, FiUpload, FiUser, FiMail } from "react-icons/fi";
 
 const Profile = () => {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
   const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) navigate("/login");
+    
+    // Set initial preview URL
+    if (user?.profilePicture) {
+      setPreviewUrl(`http://localhost:5000${user.profilePicture}`);
+    } else {
+      setPreviewUrl("http://localhost:5000/uploads/default-avatar.png");
+    }
   }, [user, navigate]);
 
   const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    setSelectedFile(file);
+    
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUpload = async () => {
     if (!selectedFile) return;
+    setIsUploading(true);
     
     const formData = new FormData();
     formData.append("profilePicture", selectedFile);
@@ -40,48 +61,81 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <Container className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
-      <Card className="shadow-lg p-4 text-center" style={{ width: "400px" }}>
-        <Card.Img
-          variant="top"
-          src={
-            user?.profilePicture
-              ? `http://localhost:5000${user.profilePicture}`
-              : "http://localhost:5000/uploads/kakashi.jpg"
-          }
-          alt="Profile"
-          className="rounded-circle mx-auto d-block border border-primary"
-          style={{ width: "120px", height: "120px", objectFit: "cover" }}
-          onError={(e) => (e.target.src = "http://localhost:5000/uploads/kakashi.jpg")}
-        />
-        <Card.Body>
-          <div className="text-start">
-            <p><strong class="text-primary">Name:</strong> {user?.username || "Guest"}</p>
-            <p><strong class="text-primary">Email:</strong> {user?.email || "No email provided"}</p>
+    <div className="profile-page">
+      <Container className="profile-container">
+        <Card className="profile-card">
+          <div className="profile-header">
+            <Button 
+              variant="link" 
+              onClick={() => navigate("/chat")} 
+              className="back-button"
+            >
+              <FiArrowLeft size={20} />
+            </Button>
+            <h3>Profile Settings</h3>
+          </div>
+          
+          <div className="profile-avatar-container">
+            <div className="profile-avatar-wrapper">
+              <img
+                src={previewUrl}
+                alt="Profile"
+                className="profile-avatar"
+                onError={(e) => (e.target.src = "http://localhost:5000/uploads/default-avatar.png")}
+              />
+              <label htmlFor="file-upload" className="avatar-upload-label">
+                <FiUpload size={16} />
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="d-none"
+              />
+            </div>
           </div>
 
-          <Form.Group className="mb-3">
-            <Form.Label><strong class="text-primary">Upload New Profile Picture:</strong></Form.Label>
-            <Form.Control type="file" onChange={handleFileChange} />
-          </Form.Group>
+          <Card.Body className="profile-body">
+            <div className="profile-info">
+              <div className="info-item">
+                <FiUser className="info-icon" />
+                <div>
+                  <div className="info-label">Username</div>
+                  <div className="info-value">{user?.username || "Guest"}</div>
+                </div>
+              </div>
+              
+              <div className="info-item">
+                <FiMail className="info-icon" />
+                <div>
+                  <div className="info-label">Email</div>
+                  <div className="info-value">{user?.email || "No email provided"}</div>
+                </div>
+              </div>
+            </div>
 
-          <Button variant="primary" className="w-100" onClick={handleUpload} disabled={!selectedFile}>
-            Upload Profile Picture
-          </Button>
-
-          <Button variant="danger" className="w-100 mt-2" onClick={() => navigate("/chat")}>
-            Back to Chat
-          </Button>
-        </Card.Body>
-      </Card>
-    </Container>
+            <div className="profile-actions">
+              <Button 
+                variant="primary" 
+                className="upload-button"
+                onClick={handleUpload} 
+                disabled={!selectedFile || isUploading}
+              >
+                {isUploading ? "Uploading..." : "Save Changes"}
+              </Button>
+            </div>
+          </Card.Body>
+        </Card>
+      </Container>
+    </div>
   );
 };
- 
+
 export default Profile;
-
-

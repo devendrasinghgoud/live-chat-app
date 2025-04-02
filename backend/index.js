@@ -20,9 +20,7 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: "*", methods: ["GET", "POST"] }
-});
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
 // ✅ Middleware
 app.use(cors());
@@ -39,30 +37,26 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Profile Picture Upload Route (Requires Authentication)
+// ✅ Profile Picture Upload Route
 app.post("/api/upload-profile", authMiddleware, upload.single("profilePicture"), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ message: "No file uploaded" });
-        }
-
-        const userId = req.user.id; // Get user ID from authMiddleware
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized" });
-        }
-
+        if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+        const userId = req.user.id;
         const profilePicturePath = `/uploads/${req.file.filename}`;
-
-        // ✅ Update User's Profile Picture
         const updatedUser = await User.findByIdAndUpdate(userId, { profilePicture: profilePicturePath }, { new: true });
-
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
+        if (!updatedUser) return res.status(404).json({ message: "User not found" });
         res.json({ profilePicture: profilePicturePath });
     } catch (error) {
-        console.error("❌ Error uploading profile picture:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// ✅ Fetch All Users Route
+app.get("/api/users", async (req, res) => {
+    try {
+        const users = await User.find({}, "-password");
+        res.json(users);
+    } catch (error) {
         res.status(500).json({ message: "Server error" });
     }
 });
@@ -72,88 +66,72 @@ app.use("/api/auth", authRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/messages", messageRoutes);
 
-// ✅ Default Route
-app.get("/", (req, res) => {
-    res.send("🚀 Live Chat Backend Running with MongoDB");
-});
-
-// ✅ MongoDB Connection with Auto-Reconnect
+// ✅ MongoDB Connection
 const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
         console.log("✅ MongoDB Connected");
-
-        mongoose.connection.on("error", (err) => {
-            console.error("❌ MongoDB connection error:", err);
-        });
-
-        mongoose.connection.on("disconnected", () => {
-            console.warn("⚠️ MongoDB disconnected! Retrying...");
-            setTimeout(connectDB, 5000);
-        });
     } catch (error) {
         console.error("❌ MongoDB connection failed:", error);
-        setTimeout(connectDB, 5000);
+        process.exit(1);
     }
 };
 
-// ✅ Socket.io Connection Handling
+// ✅ WebSocket Connection Handling
+const users = {}; // Store active users & their socket IDs
+
 io.on("connection", (socket) => {
     console.log(`⚡ New client connected: ${socket.id}`);
 
-    // ✅ Join Chat Room
-    socket.on("joinRoom", ({ chatRoom }) => {
-        socket.join(chatRoom);
-        console.log(`✅ User joined room: ${chatRoom}`);
+    socket.on("joinChat", (userId) => {
+        users[userId] = socket.id; // Store user socket ID
+        socket.join(userId); // User joins their unique room
+        console.log(`✅ User ${userId} joined with socket ID: ${socket.id}`);
     });
 
-    // ✅ Handle Incoming Messages
-    socket.on("message", async (msg, callback) => {
+    // Handle Sending Messages
+    socket.on("sendMessage", async ({ sender, receiver, content }) => {
         try {
-            if (!msg.sender || !msg.content || !msg.chatRoom) {
-                console.error("❌ Missing required fields in message:", msg);
-                return;
+            if (!sender || !receiver || !content) return;
+            const senderUser = await User.findOne({ username: sender }).select("username profilePicture");
+            const receiverUser = await User.findOne({ username: receiver }).select("username profilePicture");
+            if (!senderUser || !receiverUser) return;
+
+            // Save message to MongoDB
+            const savedMessage = await Message.create({
+                sender: senderUser._id,
+                senderUsername: senderUser.username,
+                senderProfilePicture: senderUser.profilePicture || "/default-avatar.png",
+                receiver: receiverUser._id,
+                receiverUsername: receiverUser.username,
+                content,
+                createdAt: new Date(),
+            });
+
+            // Send message to receiver if online
+            if (users[receiverUser._id]) {
+                io.to(users[receiverUser._id]).emit("receiveMessage", savedMessage);
             }
 
-            // ✅ Fetch sender details (username + profile picture)
-            const sender = await User.findById(msg.sender).select("username profilePicture");
-            if (!sender) {
-                console.error("❌ Sender not found:", msg.sender);
-                return;
-            }
-
-            // ✅ Construct the message object with sender details
-            const messageWithSender = {
-                sender: sender._id,
-                username: sender.username,
-                profilePicture: sender.profilePicture || "/default-avatar.png",
-                content: msg.content,
-                chatRoom: msg.chatRoom,
-                createdAt: new Date()
-            };
-
-            // ✅ Store message in MongoDB
-            const savedMessage = new Message(messageWithSender);
-            await savedMessage.save();
-
-            // ✅ Emit the message only to the specific chat room
-            io.to(msg.chatRoom).emit("message", messageWithSender);
-
-            // ✅ Send acknowledgment to the sender
-            callback(messageWithSender);
-            console.log("✅ Message sent:", messageWithSender);
+            // Send message confirmation to sender
+            io.to(users[senderUser._id]).emit("receiveMessage", savedMessage);
         } catch (error) {
             console.error("❌ Error sending message:", error);
         }
     });
 
-    // ✅ Handle Disconnection
     socket.on("disconnect", () => {
+        Object.keys(users).forEach((userId) => {
+            if (users[userId] === socket.id) {
+                delete users[userId];
+                console.log(`❌ User ${userId} disconnected.`);
+            }
+        });
         console.log(`❌ Client disconnected: ${socket.id}`);
     });
 });
 
-// ✅ Start server only after DB connection
+// ✅ Start server
 const startServer = async () => {
     await connectDB();
     const PORT = process.env.PORT || 5000;
