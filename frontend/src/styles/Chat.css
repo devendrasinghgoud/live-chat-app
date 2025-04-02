@@ -758,3 +758,38 @@ body {
     max-width: 100%;
   }
 }
+
+.message-actions {
+  position: absolute;
+  right: 10px;
+  top: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.message-action-btn {
+  padding: 2px 5px;
+  color: #666;
+}
+
+.message-edit-container {
+  width: 100%;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.message-edit-input {
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.message-edit-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+}
