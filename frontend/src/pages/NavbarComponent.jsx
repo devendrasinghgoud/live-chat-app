@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Navbar, Nav, Dropdown, Container, Badge } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FiLogOut, FiUser, FiSettings, FiMessageSquare, FiBell } from "react-icons/fi";
-import "../styles/Chat.css"; // We'll create this CSS file
+import "../styles/Navbar.css"; // We'll create this CSS file
 
 const NavbarComponent = () => {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));

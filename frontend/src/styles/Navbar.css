@@ -1,0 +1,332 @@
+/* Navbar.css - Modern Navigation Bar Styles */
+
+:root {
+  --primary-color: #4361ee;
+  --primary-light: #e6f0ff;
+  --secondary-color: #3f37c9;
+  --dark-color: #1a1a2e;
+  --light-color: #f8f9fa;
+  --gray-color: #6c757d;
+  --light-gray: #e9ecef;
+  --danger-color: #f72585;
+  --success-color: #4cc9f0;
+  --white: #ffffff;
+  --navbar-height: 60px;
+  --border-radius: 8px;
+  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition: all 0.3s ease;
+}
+
+/* Navbar Base Styles */
+.app-navbar {
+  background-color: var(--white);
+  box-shadow: var(--box-shadow);
+  padding: 0.5rem 1rem;
+  height: var(--navbar-height);
+  z-index: 1030;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+/* Brand Logo Styles */
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--dark-color);
+  font-size: 1.5rem;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.navbar-brand:hover {
+  color: var(--primary-color);
+}
+
+.logo-icon {
+  margin-right: 0.5rem;
+  font-size: 1.8rem;
+}
+
+.logo-text {
+  position: relative;
+}
+
+.logo-badge {
+  position: absolute;
+  top: -10px;
+  right: -30px;
+  font-size: 0.6rem;
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* Mobile Toggle Button */
+.navbar-toggle {
+  border: none;
+  padding: 0.5rem;
+  background: transparent;
+  outline: none !important;
+}
+
+.toggle-icon {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: var(--dark-color);
+  margin: 4px 0;
+  transition: var(--transition);
+}
+
+/* Navigation Links */
+.navbar-nav {
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Notification Dropdown */
+.notification-dropdown .nav-link-icon {
+  position: relative;
+  color: var(--gray-color);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  transition: var(--transition);
+}
+
+.notification-dropdown .nav-link-icon:hover {
+  color: var(--primary-color);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.6rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.dropdown-menu-notifications {
+  width: 320px;
+  padding: 0;
+  border: none;
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.dropdown-menu-notifications .dropdown-header {
+  padding: 0.75rem 1rem;
+  background-color: var(--light-color);
+  font-weight: 600;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.notification-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--light-gray);
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: var(--light-gray);
+}
+
+.notification-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.notification-text {
+  font-size: 0.85rem;
+  color: var(--gray-color);
+  margin: 0.2rem 0;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: var(--gray-color);
+}
+
+/* Profile Dropdown */
+.profile-dropdown .nav-link-profile {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  color: var(--dark-color);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.profile-dropdown .nav-link-profile:hover {
+  color: var(--primary-color);
+}
+
+.profile-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  margin-right: 0.75rem;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar.large {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 0.75rem;
+}
+
+.profile-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+}
+
+.profile-status.online {
+  background-color: var(--success-color);
+}
+
+.profile-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.dropdown-menu-profile {
+  width: 280px;
+  padding: 0;
+  border: none;
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.dropdown-header {
+  padding: 1rem;
+  text-align: center;
+  background-color: var(--light-color);
+}
+
+.profile-info {
+  margin-top: 0.5rem;
+}
+
+.profile-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--dark-color);
+}
+
+.profile-email {
+  font-size: 0.85rem;
+  color: var(--gray-color);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: var(--dark-color);
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--light-gray);
+  color: var(--primary-color);
+}
+
+.dropdown-icon {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
+}
+
+/* Auth Buttons */
+.auth-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.auth-button {
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  text-decoration: none;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+
+.auth-button:not(.primary) {
+  color: var(--dark-color);
+  border-color: var(--light-gray);
+}
+
+.auth-button:not(.primary):hover {
+  background-color: var(--light-gray);
+}
+
+.auth-button.primary {
+  background-color: var(--primary-color);
+  color: var(--white);
+}
+
+.auth-button.primary:hover {
+  background-color: var(--secondary-color);
+}
+
+.auth-button.active {
+  font-weight: 600;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .navbar-nav {
+    padding: 1rem 0;
+  }
+  
+  .dropdown-menu-notifications,
+  .dropdown-menu-profile {
+    position: static !important;
+    transform: none !important;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .auth-buttons {
+    margin-top: 1rem;
+  }
+}
+
+/* Animation for dropdown items */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  animation: fadeIn 0.2s ease-out;
+}

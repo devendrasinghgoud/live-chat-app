@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Card, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiUpload, FiUser, FiMail } from "react-icons/fi";
+import "../styles/Profile.css"; // We'll create this CSS file
 
 const Profile = () => {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
