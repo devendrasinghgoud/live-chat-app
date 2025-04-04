@@ -1,4 +1,4 @@
-/* Chat.css - WhatsApp-style Chat Application */
+/* Chat.css - Enhanced WhatsApp-style Chat Application */
 
 :root {
   --primary-color: #25D366; /* WhatsApp green */
@@ -10,6 +10,7 @@
   --light-gray: #e9ecef;
   --chat-bg: #e5ddd5;
   --white: #ffffff;
+  --danger-color: #ff4444;
   --border-radius: 8px;
   --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   --transition: all 0.3s ease;
@@ -82,6 +83,11 @@
   color: var(--gray-color);
   cursor: pointer;
   padding: 5px;
+  transition: var(--transition);
+}
+
+.logout-btn:hover {
+  color: var(--dark-color);
 }
 
 .search-box {
@@ -96,6 +102,7 @@
   border: none;
   background-color: #f0f2f5;
   outline: none;
+  font-size: 14px;
 }
 
 .users-list {
@@ -109,6 +116,7 @@
   font-size: 14px;
   color: var(--gray-color);
   margin: 0;
+  background-color: var(--light-gray);
 }
 
 .user-item {
@@ -117,7 +125,7 @@
   cursor: pointer;
   gap: 10px;
   position: relative;
-  transition: background-color 0.2s;
+  transition: var(--transition);
   border-bottom: 1px solid #f0f2f5;
 }
 
@@ -137,6 +145,7 @@
 .name {
   font-weight: 500;
   margin-bottom: 2px;
+  font-size: 15px;
 }
 
 .last-message {
@@ -179,6 +188,12 @@
   background-color: #f0f2f5;
   display: flex;
   align-items: center;
+  gap: 10px;
+}
+
+.chat-header h5 {
+  margin: 0;
+  font-size: 16px;
 }
 
 .messages-container {
@@ -195,6 +210,7 @@
   display: flex;
   margin-bottom: 8px;
   animation: fadeIn 0.2s ease-out;
+  position: relative;
 }
 
 @keyframes fadeIn {
@@ -230,11 +246,13 @@
   position: relative;
   word-wrap: break-word;
   box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+  min-width: 120px;
 }
 
 .message-text {
   margin-bottom: 4px;
   font-size: 14.5px;
+  line-height: 1.4;
 }
 
 .message-time {
@@ -248,6 +266,73 @@
   gap: 3px;
 }
 
+.message-actions {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: -35px;
+  display: flex;
+  gap: 5px;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.message-action-btn {
+  background: var(--white);
+  border: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  transition: var(--transition);
+}
+
+.message-action-btn:hover {
+  background: var(--light-gray);
+}
+
+.message-action-btn.edit {
+  color: var(--secondary-color);
+}
+
+.message-action-btn.delete {
+  color: var(--danger-color);
+}
+
+/* Attachment Styles */
+.message-attachment {
+  max-width: 100%;
+  max-height: 300px;
+  margin-top: 8px;
+  border-radius: var(--border-radius);
+  display: block;
+}
+
+.file-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius);
+  margin-top: 8px;
+}
+
+.file-attachment span {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Empty States */
 .empty-chat, .no-chat-selected {
   display: flex;
@@ -257,10 +342,20 @@
   height: 100%;
   text-align: center;
   color: var(--gray-color);
+  padding: 20px;
 }
 
 .empty-chat h4, .empty-chat h5 {
   color: var(--dark-color);
+}
+
+.select-conversation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray-color);
+  font-size: 16px;
 }
 
 /* Message Input */
@@ -268,20 +363,76 @@
   padding: 10px 15px;
   background-color: #f0f2f5;
   display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--light-gray);
+}
+
+.attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.attachment-preview img {
+  max-height: 60px;
+  border-radius: 4px;
+}
+
+.remove-attachment {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.input-group {
+  display: flex;
   gap: 10px;
   align-items: center;
-  border-top: 1px solid var(--light-gray);
+}
+
+.attachment-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.attachment-btn {
+  background: none;
+  border: none;
+  color: var(--gray-color);
+  cursor: pointer;
+  font-size: 20px;
+  transition: var(--transition);
+}
+
+.attachment-btn:hover {
+  color: var(--dark-color);
 }
 
 .message-textarea {
   flex: 1;
-  border-radius: 8px;
+  border-radius: 20px;
   border: none;
   resize: none;
   padding: 10px 15px;
   max-height: 120px;
   outline: none;
   font-size: 15px;
+  background-color: var(--white);
 }
 
 .send-button {
@@ -296,11 +447,54 @@
   color: white;
   border: none;
   cursor: pointer;
+  transition: var(--transition);
+}
+
+.send-button:hover {
+  background-color: var(--secondary-color);
+}
+
+.send-button:disabled {
+  background-color: var(--light-gray);
+  cursor: not-allowed;
+}
+
+/* Camera Modal Styles */
+.camera-modal .modal-content {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.camera-feed {
+  width: 100%;
+  max-height: 70vh;
+  background-color: #000;
+  display: block;
+}
+
+.capture-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--white);
+  border: 4px solid var(--light-gray);
+  cursor: pointer;
+}
+
+.capture-btn:active {
+  transform: translateX(-50%) scale(0.95);
 }
 
 /* Loading Spinner */
-.text-center {
-  text-align: center;
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
 /* Responsive Design */
@@ -308,6 +502,8 @@
   .chat-app {
     flex-direction: column;
     height: 100vh;
+    margin: 0;
+    border-radius: 0;
   }
   
   .sidebar {
@@ -323,5 +519,25 @@
   
   .message {
     max-width: 85%;
+  }
+  
+  .message-actions {
+    right: -30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .message {
+    max-width: 90%;
+  }
+  
+  .message-actions {
+    right: -25px;
+  }
+  
+  .message-action-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
   }
 }
