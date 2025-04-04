@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
-import { Container, Form, Button, Spinner, Badge, Modal, Image } from "react-bootstrap";
+import { Form, Button, Spinner, Badge, Modal, Image } from "react-bootstrap";
 import { jwtDecode } from "jwt-decode";
 import { FiLogOut, FiSend, FiUser, FiEdit, FiTrash2, FiPaperclip, FiCamera } from "react-icons/fi";
 import moment from "moment";
@@ -64,7 +64,6 @@ const Chat = () => {
         return updatedMessages;
       });
       
-      // Update unread count if not the current chat
       if (selectedUser?._id !== msg.sender._id) {
         setUnreadCounts(prev => ({
           ...prev,
@@ -162,7 +161,6 @@ const Chat = () => {
     setAttachment(null);
     setAttachmentPreview(null);
     
-    // Emit to server to update message
     socket.emit("updateMessage", {
       originalMessage: editingMessage,
       updatedContent: message,
@@ -185,7 +183,6 @@ const Chat = () => {
     localStorage.setItem(`messages_${selectedUser._id}`, JSON.stringify(filteredMessages));
     setShowDeleteModal(false);
     
-    // Emit to server to delete message
     socket.emit("deleteMessage", {
       message: messageToDelete,
       chatRoom: selectedUser._id
@@ -199,7 +196,7 @@ const Chat = () => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const attachmentData = {
-        type: file.type.split('/')[0], // 'image', 'video', 'audio'
+        type: file.type.split('/')[0],
         url: reader.result,
         name: file.name,
         size: file.size
@@ -244,7 +241,6 @@ const Chat = () => {
       setAttachmentPreview(imageDataUrl);
       setShowCameraModal(false);
       
-      // Stop camera stream
       const stream = videoRef.current.srcObject;
       const tracks = stream.getTracks();
       tracks.forEach(track => track.stop());
@@ -287,9 +283,61 @@ const Chat = () => {
     }
   };
 
+  const renderMessages = () => {
+    if (loadingMessages) return <Spinner animation="border" variant="primary" />;
+    
+    let lastDate = null;
+    return messages.map((msg, index) => {
+      const currentDate = moment(msg.timestamp).format('YYYY-MM-DD');
+      const showDate = currentDate !== lastDate;
+      lastDate = currentDate;
+
+      return (
+        <React.Fragment key={index}>
+          {showDate && (
+            <div className="date-separator">
+              <span>{moment(msg.timestamp).format('MMMM D, YYYY')}</span>
+            </div>
+          )}
+          <div
+            className={`message ${
+              msg.sender?._id === userRef.current?._id ? "sent" : "received"
+            }`}
+          >
+            <div className="message-content">
+              {msg.content}
+              {renderAttachment(msg.attachment)}
+              <div className="message-time">
+                {moment(msg.timestamp).format("h:mm A")}
+              </div>
+            </div>
+            {msg.sender?._id === userRef.current?._id && (
+              <div className="message-actions">
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => handleEditMessage(msg)}
+                >
+                  <FiEdit size={14} />
+                </Button>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => handleDeleteMessage(msg)}
+                >
+                  <FiTrash2 size={14} />
+                </Button>
+              </div>
+            )}
+          </div>
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
-    <div className="chat-app m-5">
-      <div className="sidebar mt-5">
+    <div className="chat-app">
+      <div className="sidebar">
         <div className="sidebar-header">
           <div className="user-info">
             <FiUser size={24} />
@@ -323,7 +371,7 @@ const Chat = () => {
           )}
         </div>
       </div>
-      <div className="chat-area mt-5">
+      <div className="chat-area">
         {selectedUser ? (
           <>
             <div className="chat-header">
@@ -331,44 +379,7 @@ const Chat = () => {
               <h5>{selectedUser.username}</h5>
             </div>
             <div className="messages-container">
-              {loadingMessages ? (
-                <Spinner animation="border" variant="primary" />
-              ) : (
-                messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`message ${
-                      msg.sender?._id === userRef.current?._id ? "sent" : "received"
-                    }`}
-                  >
-                    <div className="message-content">
-                      {msg.content}
-                      {renderAttachment(msg.attachment)}
-                      <div className="message-time">
-                        {moment(msg.timestamp).format("h:mm A")}
-                      </div>
-                    </div>
-                    {msg.sender?._id === userRef.current?._id && (
-                      <div className="message-actions">
-                        <Button
-                          variant="link"
-                          size="sm"
-                          onClick={() => handleEditMessage(msg)}
-                        >
-                          <FiEdit size={14} />
-                        </Button>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          onClick={() => handleDeleteMessage(msg)}
-                        >
-                          <FiTrash2 size={14} />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
+              {renderMessages()}
               <div ref={messagesEndRef} />
             </div>
             <div className="message-input">
@@ -443,7 +454,6 @@ const Chat = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Delete Message</Modal.Title>
@@ -459,7 +469,6 @@ const Chat = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Camera Modal */}
       <Modal show={showCameraModal} onHide={() => setShowCameraModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Take a Photo</Modal.Title>
